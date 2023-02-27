@@ -14,6 +14,11 @@ class Game:
         player_sprite = Player((screen_width / 2, screen_height), 5, screen_width)
         self.player = pygame.sprite.GroupSingle(sprite=player_sprite)
 
+        # health and score setup
+        self.lives = 3
+        self.live_surf = pygame.image.load('graphics/player.png').convert_alpha()
+        self.live_x_start_pos = screen_width - (self.live_surf.get_size()[0] * 2 + 20)
+
         # obstacles setup
         self.block_size = 6
         self.blocks = pygame.sprite.Group()
@@ -87,6 +92,52 @@ class Game:
             self.alien_boss.add(AlienBoss(choice(['left', 'right']), screen_width))
             self.alien_boss_spawn_time = randint(400, 800)
 
+    def collision_checks(self):
+        # player lasers
+        if self.player.sprite.lasers:
+            for laser in self.player.sprite.lasers:
+                # obstacle collisions
+                if pygame.sprite.spritecollide(laser, self.blocks, True):
+                    laser.kill()
+
+                # alien collisions
+                if pygame.sprite.spritecollide(laser, self.aliens, True):
+                    laser.kill()
+
+                # boss collisions
+                if pygame.sprite.spritecollide(laser, self.alien_boss, True):
+                    laser.kill()
+
+        # alien lasers
+        if self.alien_lasers:
+            for laser in self.alien_lasers:
+                # obstacle collisions
+                if pygame.sprite.spritecollide(laser, self.blocks, True):
+                    laser.kill()
+
+                # player collisions
+                if pygame.sprite.spritecollide(laser, self.player, False):
+                    laser.kill()
+                    self.lives -= 1
+
+                    if self.lives <= 0:
+                        pygame.quit()
+                        sys.exit()
+
+        # aliens
+        if self.aliens:
+            for alien in self.aliens:
+                pygame.sprite.spritecollide(alien, self.blocks, True)
+
+                if pygame.sprite.spritecollide(alien, self.player, False):
+                    pygame.quit()
+                    sys.exit()
+
+    def display_lives(self):
+        for live in range(self.lives - 1):
+            x = self.live_x_start_pos + (live * (self.live_surf.get_size()[0] + 10))
+            screen.blit(self.live_surf, (x, 8))
+
     def run(self):
         self.player.update()
         self.aliens.update(self.alien_direction)
@@ -94,6 +145,8 @@ class Game:
         self.alien_lasers.update()
         self.alien_boss_spawner()
         self.alien_boss.update()
+        self.collision_checks()
+        self.display_lives()
 
         self.player.sprite.lasers.draw(screen)
         self.player.draw(screen)

@@ -23,7 +23,7 @@ class AlienBoss(pygame.sprite.Sprite):
             x = -50
             self.speed = 3
 
-        self.rect = self.image.get_rect(topleft=(x, 40))
+        self.rect = self.image.get_rect(topleft=(x, 60))
 
     def update(self):
         self.rect.x += self.speed
