@@ -14,10 +14,14 @@ class Game:
         player_sprite = Player((screen_width / 2, screen_height), 5, screen_width)
         self.player = pygame.sprite.GroupSingle(sprite=player_sprite)
 
-        # health and score setup
+        # health setup
         self.lives = 3
         self.live_surf = pygame.image.load('graphics/player.png').convert_alpha()
         self.live_x_start_pos = screen_width - (self.live_surf.get_size()[0] * 2 + 20)
+
+        # score setup
+        self.score = 0
+        self.font = pygame.font.Font('font/Pixeled.ttf', 20)
 
         # obstacles setup
         self.block_size = 6
@@ -101,11 +105,15 @@ class Game:
                     laser.kill()
 
                 # alien collisions
-                if pygame.sprite.spritecollide(laser, self.aliens, True):
+                aliens_hit = pygame.sprite.spritecollide(laser, self.aliens, True)
+                if aliens_hit:
+                    for alien in aliens_hit:
+                        self.score += alien.value
                     laser.kill()
 
                 # boss collisions
                 if pygame.sprite.spritecollide(laser, self.alien_boss, True):
+                    self.score += 1000
                     laser.kill()
 
         # alien lasers
@@ -138,6 +146,11 @@ class Game:
             x = self.live_x_start_pos + (live * (self.live_surf.get_size()[0] + 10))
             screen.blit(self.live_surf, (x, 8))
 
+    def display_score(self):
+        score_surf = self.font.render(f'Score: {self.score}', False, (64, 64, 64))
+        score_rect = score_surf.get_rect(topleft=(10, -10))
+        screen.blit(score_surf, score_rect)
+
     def run(self):
         self.player.update()
         self.aliens.update(self.alien_direction)
@@ -146,7 +159,6 @@ class Game:
         self.alien_boss_spawner()
         self.alien_boss.update()
         self.collision_checks()
-        self.display_lives()
 
         self.player.sprite.lasers.draw(screen)
         self.player.draw(screen)
@@ -154,6 +166,27 @@ class Game:
         self.aliens.draw(screen)
         self.alien_lasers.draw(screen)
         self.alien_boss.draw(screen)
+        self.display_lives()
+        self.display_score()
+
+
+class CRT:
+    def __init__(self):
+        self.tv = pygame.image.load('graphics/tv.png').convert_alpha()
+        self.tv = pygame.transform.scale(self.tv, (screen_width, screen_height))
+
+    def create_crt_lines(self):
+        line_height = 3
+        line_amount = int(screen_height / line_height)
+
+        for line in range(line_amount):
+            y_pos = line * line_height
+            pygame.draw.line(self.tv, 'black', (0, y_pos), (screen_width, y_pos), 1)
+
+    def draw(self):
+        self.tv.set_alpha(50)
+        self.create_crt_lines()
+        screen.blit(self.tv, (0, 0))
 
 
 if __name__ == '__main__':
@@ -163,6 +196,7 @@ if __name__ == '__main__':
     screen = pygame.display.set_mode((screen_width, screen_height))
     clock = pygame.time.Clock()
     game = Game()
+    crt = CRT()
 
     ALIENLASER = pygame.USEREVENT + 1
     pygame.time.set_timer(ALIENLASER, 1200)
@@ -177,6 +211,7 @@ if __name__ == '__main__':
 
         screen.fill((30, 30, 30))
         game .run()
+        crt.draw()
 
         pygame.display.flip()
         clock.tick(60)
