@@ -41,6 +41,16 @@ class Game:
         self.alien_boss = pygame.sprite.GroupSingle()
         self.alien_boss_spawn_time = randint(400, 800)
 
+        # audio setup
+        music = pygame.mixer.Sound('audio/music.wav')
+        music.set_volume(0.1)
+        music.play(loops=-1)
+
+        self.laser_sound = pygame.mixer.Sound('audio/laser.wav')
+        self.laser_sound.set_volume(0.2)
+        self.explosion_sound = pygame.mixer.Sound('audio/explosion.wav')
+        self.explosion_sound.set_volume(0.2)
+
     def create_obstacle(self, x_start, y_start, x_offset):
         for row_index, row in enumerate(self.obstacle_shape):
             for col_index, col in enumerate(row):
@@ -88,6 +98,7 @@ class Game:
             random_alien = choice(self.aliens.sprites())
             laser_sprite = Laser(random_alien.rect.center, 6, screen_height)
             self.alien_lasers.add(laser_sprite)
+            self.laser_sound.play()
 
     def alien_boss_spawner(self):
         self.alien_boss_spawn_time -= 1
@@ -110,6 +121,7 @@ class Game:
                     for alien in aliens_hit:
                         self.score += alien.value
                     laser.kill()
+                    self.explosion_sound.play()
 
                 # boss collisions
                 if pygame.sprite.spritecollide(laser, self.alien_boss, True):
@@ -151,6 +163,12 @@ class Game:
         score_rect = score_surf.get_rect(topleft=(10, -10))
         screen.blit(score_surf, score_rect)
 
+    def display_victory_message(self):
+        if not self.aliens.sprites():
+            victory_surf = self.font.render('YOU WON!!!', False, 'white')
+            victory_rect = victory_surf.get_rect(center=(screen_width / 2, screen_height / 2))
+            screen.blit(victory_surf, victory_rect)
+
     def run(self):
         self.player.update()
         self.aliens.update(self.alien_direction)
@@ -168,6 +186,7 @@ class Game:
         self.alien_boss.draw(screen)
         self.display_lives()
         self.display_score()
+        self.display_victory_message()
 
 
 class CRT:
